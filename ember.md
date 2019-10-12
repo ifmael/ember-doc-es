@@ -658,3 +658,83 @@ person.addObserver('fullName', function() {
 });
 ```
 
+### Bindings
+Nota: Para la mayoría de los problemas que se enfrenta un desarrollador, las computed properties son la solución apropiada.
+
+La manera más sencilla de crear doble data binding en Ember es por medio de `computed.alias(), que especifica el path a otro objeto
+
+```javascript
+import EmberObject from '@ember/object';
+import { alias } from '@ember/object/computed';
+
+husband = EmberObject.create({
+  pets: 0
+});
+
+Wife = EmberObject.extend({
+  pets: alias('husband.pets')
+});
+
+wife = Wife.create({
+  husband: husband
+});
+
+wife.get('pets'); // 0
+
+// Someone gets a pet.
+husband.set('pets', 1);
+wife.get('pets'); // 1
+```
+
+El doble data binding no se actualiza inmediatamente. Ember espera hasta que todo el código de la aplicación ha finalizado de ejecutarse antes de sincronizar los cambios, por lo que se puede cambiar una propiedad tantas veces como se desee sin preocuparse por la sobrecarga de los binding en la sincronizacón cuando lo valores son transitorios.
+
+#### One-way binding
+De este modo los cambios solo se propagan en una sola dirección, usando `computed.oneWay()`.A menudo, one-way son una optimización de rendimiento. Algunas veces one-way son utiles para conseguir un comportamiento específico, como un valor predeterminado que es igual a otra propiedad pero se puede sobreescribir.
+
+```javascript
+import EmberObject, { computed } from '@ember/object';
+import Component from '@ember/component';
+import { oneWay } from '@ember/object/computed';
+
+user = EmberObject.create({
+  fullName: 'Kara Gates'
+});
+
+UserComponent = Component.extend({
+  userName: oneWay('user.fullName')
+});
+
+userComponent = UserComponent.create({
+  user: user
+});
+
+// Changing the name of the user object changes
+// the value on the view.
+user.set('fullName', 'Krang Gates');
+// userComponent.userName will become "Krang Gates"
+
+// ...but changes to the view don't make it back to
+// the object.
+userComponent.set('userName', 'Truckasaurus Gates');
+user.get('fullName'); // "Krang Gates"
+```
+
+### Enumerables
+En Ember, un enumarable es cualquier objeto que contiene un número de objetos hijos, los cuales te permiten trabajar con estos hijos usando la API `MutableArray`. El más común de los enumarables en la mayoría de las app es el Array nativo de JS, el cuál ember extiende para satisfacer la interfaz enumrable.
+
+Proporcionando una interfaz estandarizada para tratar con los enumerables, Ember permite cambiar completamente la forma en que los datos se almacenan sin tener que modificar otras partes de la aplicación para poder acceder.
+
+La API enumerable sigue la especificación ECMAScript todo lo posible.
+
+#### Usar métodos observable y propiedades.
+Para propircionale a Ember cuando se realiza un cambio en un enumarable, es necesario utilizar los métodos específicos que proporciona `MutableArray`. Así si se añade un elemento utilizando el método estandar de JS `push()`, Ember no observará los cambios pero si por el contrario se utiliza el método `pushObject()`, el cambio se propagará a través de la aplicación. A continuación una lista de los métodos estándar de JS y sus observables equivalentes.
+
+| Método Estandar | Observable equivalente |
+|:-:|---|
+| pop | popObject |
+| push | pushObject |
+| reverse | reverseObjects |
+| shift | shiftObject |
+| unshit | unshiftObject |
+
+Además para obtener el primer y último elemento de un array observable, se puede utilizar `myArray.get('firstObject')` y `myArray.get('lastObject')` respectivamente.
