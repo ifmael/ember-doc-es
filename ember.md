@@ -738,3 +738,139 @@ Para propircionale a Ember cuando se realiza un cambio en un enumarable, es nece
 | unshit | unshiftObject |
 
 Además para obtener el primer y último elemento de un array observable, se puede utilizar `myArray.get('firstObject')` y `myArray.get('lastObject')` respectivamente.
+
+#### Resumen de la API
+
+##### Interactuando sobre un enumerable
+Para recorrer todos los valores, se usa la función `forEach()`
+
+```javascript
+let food = ['Poi', 'Ono', 'Adobo Chicken'];
+
+food.forEach((item, index) => {
+  console.log(`Menu Item ${index+1}: ${item}`);
+});
+
+// Menu Item 1: Poi
+// Menu Item 2: Ono
+// Menu Item 3: Adobo Chicken
+```
+
+##### Primer y último objeto
+Todos los enumerables contiene las propiedades `firstObject` y `lastObject`
+
+```javascript
+import { A } from '@ember/array';
+
+let animals = A(['rooster', 'pig']);
+
+animals.get('lastObject');
+//=> "pig"
+
+animals.pushObject('peacock');
+
+animals.get('lastObject');
+//=> "peacock"
+```
+
+##### Map
+Se puede transformar cada item de un enumerable por medio del método `map`. El cual crea un nuevo array.
+
+```javascript
+let words = ['goodbye', 'cruel', 'world'];
+
+let emphaticWords = words.map(item => `${item}!`);
+//=> ["goodbye!", "cruel!", "world!"]
+```
+
+Si el enumerable es compuesto por objetos, hay un método `mapBy()` que extrae el nombre de la propiedad para cada uno de estos objetos y devuelve un array.
+
+```javascript
+import { A } from '@ember/array';
+import EmberObject from '@ember/object';
+
+let hawaii = EmberObject.create({
+  capital: 'Honolulu'
+});
+
+let california = EmberObject.create({
+  capital: 'Sacramento'
+});
+
+let states = A([hawaii, california]);
+
+states.mapBy('capital');
+//=> ["Honolulu", "Sacramento"]
+```
+
+##### Filtros
+Una tarea muy común para realizar con enumerables, es a partir de ellos devolver un Array basado en algún criterio.
+
+Para filtros arbitrarios, se usa la método `filter()`. Espera un callback que devuelva `true` si  se quiere que Ember lo incluya en el Array de respuesta, en otro caso se devuelve un `undefined` o un `false`.
+
+```javascript
+let arr = [1, 2, 3, 4, 5];
+
+arr.filter((item, index, self) => item < 4);
+
+//=> [1, 2, 3]
+```
+
+Cuando se trabaja con colecciones de objectos Ember, se quiere filtrar los objetos en base el valor de alguna propiedad. Para este fin se puede utilizar el método `filterBy()`
+
+```javascript
+import { A } from '@ember/array';
+import EmberObject from '@ember/object';
+
+Todo = EmberObject.extend({
+  title: null,
+  isDone: false
+});
+
+let todos = A([
+  Todo.create({ title: 'Write code', isDone: true }),
+  Todo.create({ title: 'Go to sleep' })
+]);
+
+todos.filterBy('isDone', true);
+
+// returns an Array containing only items with `isDone == true`
+```
+
+##### Agregar información (every or any)
+Para averiguar si los items en un enumerable coinciden con alguna condición, se usa `every()`
+
+```javascript
+import { A } from '@ember/array';
+import EmberObject from '@ember/object';
+
+Person = EmberObject.extend({
+  name: null,
+  isHappy: false
+});
+
+let people = A([
+  Person.create({ name: 'Yehuda', isHappy: true }),
+  Person.create({ name: 'Majd', isHappy: false })
+]);
+
+people.every((person, index, self) => person.get('isHappy'));
+
+//=> false
+
+```
+
+Para averiguar si al menos un item de un enumerable coincide con alguna condición, se puede usar el método `any()`.
+
+```javascript
+people.any((person, index, self) => person.get('isHappy'));
+
+//=> true
+```
+
+Al igual que los metodos de los filtros, los método `every()` y `any()` tienen un análogo con `isEvery()` y `isAny()`.
+
+```javascript
+people.isEvery('isHappy', true); // false
+people.isAny('isHappy', true);  // true
+```
